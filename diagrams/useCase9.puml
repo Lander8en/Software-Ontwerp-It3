@@ -1,0 +1,104 @@
+@startuml useCase9
+title Use Case 9: Edit Row Value
+hide footbox
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableRowsWindow
+participant RowValueEditor
+participant RowValueAccess
+participant TableController
+participant UndoManager
+participant ChangeRowValueCommand
+participant Table
+
+== Click Cell ==
+User -> MainWindow : click in cell
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableRowsWindow : handleMouseEvent(...)
+activate TableRowsWindow
+TableRowsWindow -> TableRowsWindow : getRowIndexFromY(...)
+TableRowsWindow -> TableRowsWindow : getColumnIndexFromX(...)
+TableRowsWindow -> TableRowsWindow : isInCellClickArea(...)
+TableRowsWindow -> RowValueEditor : startEditing(...)
+activate RowValueEditor
+return void
+deactivate RowValueEditor
+deactivate TableRowsWindow
+deactivate EditAnySubwindowStrategy
+deactivate MouseInteractionDispatcher
+deactivate SubwindowManager
+deactivate MainWindow
+
+== Type or Press Key ==
+User -> MainWindow : press key
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableRowsWindow : handleKeyEvent(...)
+activate TableRowsWindow
+TableRowsWindow -> RowValueEditor : handleKeyEvent(...)
+activate RowValueEditor
+return void
+deactivate RowValueEditor
+deactivate TableRowsWindow
+deactivate SubwindowManager
+deactivate MainWindow
+
+== Finish Editing ==
+alt User presses Enter or clicks outside
+    RowValueEditor -> RowValueAccess : getAll()
+    activate RowValueAccess
+    RowValueAccess -> TableController : rowsRequest()
+    activate TableController
+    TableController -> Table : getRows()
+    activate Table
+    Table --> TableController : rows
+    deactivate Table
+    TableController --> RowValueAccess : rows
+    deactivate TableController
+    RowValueAccess --> RowValueEditor : rows
+    deactivate RowValueAccess
+    RowValueEditor -> RowValueEditor : isValid()
+
+    alt valid
+        RowValueEditor -> RowValueAccess : setValue(...)
+        activate RowValueAccess
+        RowValueAccess -> TableController : updateValue(...)
+        activate TableController
+        TableController -> ChangeRowValueCommand : New ChangeRowValueCommand()
+        activate ChangeRowValueCommand
+        return command
+        TableController -> UndoManager : execute(command)
+        activate UndoManager
+        UndoManager -> ChangeRowValueCommand : execute()
+        activate ChangeRowValueCommand
+        ChangeRowValueCommand -> Table : updateRowValue(...)
+        activate Table
+        return void
+        return void
+        return void
+        return void
+        return void
+    else invalid
+        note right of RowValueEditor : Show red border, editing continues
+    end
+end
+
+@enduml

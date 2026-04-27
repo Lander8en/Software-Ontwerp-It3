@@ -1,0 +1,38 @@
+@startuml useCase11
+hide footbox
+title Use Case 11: Undo Modification
+
+actor User
+
+participant MainWindow
+participant SubwindowManager
+participant UndoManager
+participant undoStack
+participant redoStack
+participant Command
+
+User -> MainWindow : presses Ctrl+Z
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(..., Ctrl+Z)
+activate SubwindowManager
+SubwindowManager -> UndoManager : undo()
+activate UndoManager
+
+UndoManager -> undoStack : pop()
+activate undoStack
+undoStack --> UndoManager : Command
+deactivate undoStack
+
+UndoManager -> Command : undo()
+activate Command
+Command --> UndoManager : void
+deactivate Command
+
+UndoManager -> redoStack : push(Command)
+activate redoStack
+return void
+
+return void
+return void
+return
+@enduml

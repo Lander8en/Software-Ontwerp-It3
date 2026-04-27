@@ -1,0 +1,81 @@
+@startuml useCase1
+hide footbox
+title Use Case 1: Create Table
+
+actor User
+
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindow
+participant TableSubwindow
+participant TableRepoController
+participant UndoManager
+participant AddTableCommand
+participant TableRepository
+participant NameGenerator
+participant Table
+
+User -> MainWindow : double-click
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindow : wantsToHandle(...)
+activate EditAnySubwindow
+EditAnySubwindow --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindow
+MouseInteractionDispatcher -> EditAnySubwindow : handle(...)
+activate EditAnySubwindow
+EditAnySubwindow -> TableSubwindow : handleMouseEvent(...)
+activate TableSubwindow
+TableSubwindow -> TableSubwindow : isInAddTableArea(...)
+TableSubwindow -> TableRepoController : handleCreateNewTableRequest()
+activate TableRepoController
+
+TableRepoController -> AddTableCommand : new AddTableCommand()
+activate AddTableCommand
+AddTableCommand -> TableRepository : createNewTable()
+activate TableRepository
+TableRepository -> NameGenerator : generateUniqueName(...)
+activate NameGenerator
+NameGenerator --> TableRepository : name
+deactivate NameGenerator
+TableRepository -> Table : Table(name)
+activate Table
+Table --> TableRepository : table
+deactivate Table
+TableRepository --> AddTableCommand : table
+deactivate TableRepository
+AddTableCommand --> TableRepoController : command
+deactivate AddTableCommand
+
+TableRepoController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> AddTableCommand : execute()
+activate AddTableCommand
+AddTableCommand -> TableRepository : addTable(index, table)
+activate TableRepository
+return void
+AddTableCommand --> UndoManager : void
+deactivate AddTableCommand
+UndoManager --> TableRepoController : void
+deactivate UndoManager
+
+TableRepoController --> TableSubwindow : void
+deactivate TableRepoController
+TableSubwindow --> EditAnySubwindow : void
+deactivate TableSubwindow
+EditAnySubwindow --> MouseInteractionDispatcher : void
+deactivate EditAnySubwindow
+MouseInteractionDispatcher --> SubwindowManager : void
+deactivate MouseInteractionDispatcher
+SubwindowManager --> MainWindow : void
+deactivate SubwindowManager
+MainWindow --> User
+deactivate MainWindow
+@enduml

@@ -1,0 +1,85 @@
+@startuml useCase3
+hide footbox
+title Use Case 3: Delete Table
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableSubwindow
+participant TableRepoController
+participant UndoManager
+participant DeleteTableCommand
+participant TableRepository
+
+== Select Table ==
+User -> MainWindow : handleMouseEvent(MOUSE_CLICKED, x, y, 1)
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...) 
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableSubwindow : handleMouseEvent(...)
+activate TableSubwindow
+TableSubwindow -> TableRepoController : tablesRequest()
+activate TableRepoController
+TableRepoController -> TableRepository : getTables()
+activate TableRepository
+TableRepository --> TableRepoController : tables
+deactivate TableRepository
+TableRepoController --> TableSubwindow : tables
+deactivate TableRepoController
+TableSubwindow -> TableSubwindow : getTableIndexFromY(...)
+TableSubwindow --> TableSubwindow : index
+TableSubwindow -> TableSubwindow : isInSelectionMargin(...)
+TableSubwindow --> TableSubwindow : true
+note right of TableSubwindow : selectedTableIndex = index
+TableSubwindow --> EditAnySubwindowStrategy : void
+deactivate TableSubwindow
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : void
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher --> SubwindowManager : void
+deactivate MouseInteractionDispatcher
+SubwindowManager --> MainWindow : void
+deactivate SubwindowManager
+MainWindow --> User
+deactivate MainWindow
+
+== Press Delete ==
+User -> MainWindow : handleKeyEvent(KEY_PRESSED, VK_DELETE, ...)
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableSubwindow : handleKeyEvent(...)
+activate TableSubwindow
+TableSubwindow -> TableRepoController : handleDeleteTableRequest(table)
+activate TableRepoController
+TableRepoController -> DeleteTableCommand : New DeleteTableCommand()
+activate DeleteTableCommand
+return command
+TableRepoController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> DeleteTableCommand : execute()
+activate DeleteTableCommand
+DeleteTableCommand -> TableRepository : removeTable()
+activate TableRepository
+return void
+return void
+return void
+return void
+return void
+return void
+MainWindow --> User
+deactivate MainWindow
+
+@enduml

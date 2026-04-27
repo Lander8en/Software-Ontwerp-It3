@@ -1,0 +1,71 @@
+@startuml useCase10
+title Use Case 10: Delete Row
+hide footbox
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableRowsSubwindow
+participant TableController
+participant UndoManager
+participant DeleteRowCommand
+participant Table
+
+== Select Row ==
+User -> MainWindow : handleMouseEvent(MOUSE_CLICKED, x, y, 1)
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableRowsSubwindow : handleMouseEvent(...)
+activate TableRowsSubwindow
+TableRowsSubwindow -> TableRowsSubwindow : getRowIndexFromY(...)
+TableRowsSubwindow --> TableRowsSubwindow : index
+TableRowsSubwindow -> TableRowsSubwindow : isInSelectionMargin(...)
+TableRowsSubwindow --> TableRowsSubwindow : true
+note right of TableRowsSubwindow : selectedRowIndex = index
+TableRowsSubwindow --> EditAnySubwindowStrategy : void
+deactivate TableRowsSubwindow
+deactivate EditAnySubwindowStrategy
+deactivate MouseInteractionDispatcher
+deactivate SubwindowManager
+deactivate MainWindow
+
+== Press Delete ==
+User -> MainWindow : handleKeyEvent(KEY_PRESSED, VK_DELETE, ...) or press ctrl + D in Form Window
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableRowsSubwindow : handleKeyEvent(...)
+activate TableRowsSubwindow
+TableRowsSubwindow -> TableController : handleDeleteRowRequest(...)
+activate TableController
+TableController -> DeleteRowCommand : New DeleteRowCommand()
+activate DeleteRowCommand
+return command
+TableController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> DeleteRowCommand : execute()
+activate DeleteRowCommand
+DeleteRowCommand -> Table : removeRow(...)
+activate Table
+return void
+return void
+return void
+return void
+return void
+return void
+return
+@enduml

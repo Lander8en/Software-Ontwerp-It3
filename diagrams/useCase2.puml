@@ -1,0 +1,189 @@
+@startuml useCase2
+hide footbox
+title Use Case 2: Edit Table Name
+
+actor User
+
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableSubwindow
+participant NameEditor
+participant TableNameAccess
+participant TableRepoController
+participant UndoManager
+participant RenameTableCommand
+participant TableRepository
+participant Table
+
+User -> MainWindow : click on table name
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...) 
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableSubwindow : handleMouseEvent(mouseX, mouseY)
+activate TableSubwindow
+TableSubwindow -> TableSubwindow : getTableIndexFromY(...)
+TableSubwindow -> NameEditor : startEditing(index)
+activate NameEditor
+
+User -> MainWindow : press key (e.g. 'A', Backspace)
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableSubwindow : handleKeyEvent(...)
+activate TableSubwindow
+TableSubwindow -> NameEditor : handleKeyEvent(...)
+activate NameEditor
+NameEditor --> TableSubwindow : void
+deactivate NameEditor
+TableSubwindow --> SubwindowManager : void
+deactivate TableSubwindow
+SubwindowManager --> MainWindow : void
+deactivate SubwindowManager
+MainWindow --> User
+deactivate MainWindow
+
+User -> MainWindow : press Enter or click outside
+activate MainWindow
+alt if press Enter
+    MainWindow -> SubwindowManager : handleKeyEvent(...)
+    activate SubwindowManager
+    SubwindowManager -> TableSubwindow : handleKeyEvent(...)
+    activate TableSubwindow
+    TableSubwindow -> NameEditor : handleKeyEvent(...)
+    activate NameEditor
+    NameEditor -> TableNameAccess : getAll()
+    activate TableNameAccess
+    TableNameAccess -> TableRepoController : tablesRequest()
+    activate TableRepoController
+    TableRepoController -> TableRepository : getTables()
+    activate TableRepository
+    TableRepository --> TableRepoController : tables
+    deactivate TableRepository
+    TableRepoController --> TableNameAccess : tables
+    deactivate TableRepoController
+    TableNameAccess --> NameEditor : tables
+    deactivate TableNameAccess
+    NameEditor -> NameEditor : isValid()
+
+    alt invalid
+        note right of NameEditor : Editing continues
+    else valid
+        NameEditor -> TableNameAccess : setName(...)
+        activate TableNameAccess
+        TableNameAccess -> TableRepoController : rename(...)
+        activate TableRepoController
+        TableRepoController -> RenameTableCommand : new RenameTableCommand()
+        activate RenameTableCommand
+        return command
+        TableRepoController -> UndoManager : execute(command)
+        activate UndoManager
+        UndoManager -> RenameTableCommand : execute()
+        activate RenameTableCommand
+        RenameTableCommand -> TableRepository : updateTableName(...)
+        activate TableRepository
+        TableRepository -> Table : setName(...)
+        activate Table
+        return void
+        return void
+        return void
+        return void
+        return void
+        return void
+    end
+
+    NameEditor --> TableSubwindow : void
+    deactivate NameEditor
+    TableSubwindow --> SubwindowManager : void
+    deactivate TableSubwindow
+    SubwindowManager --> MainWindow : void
+    deactivate SubwindowManager
+
+else if click outside
+    MainWindow -> SubwindowManager : handleMouseEvent(...)
+    activate SubwindowManager
+    SubwindowManager -> TableSubwindow : handleMouseEvent(...)
+    activate TableSubwindow
+    TableSubwindow -> NameEditor : commitEdit()
+    activate NameEditor
+    NameEditor -> TableNameAccess : getAll()
+    activate TableNameAccess
+    TableNameAccess -> TableRepoController : tablesRequest()
+    activate TableRepoController
+    TableRepoController -> TableRepository : getTables()
+    activate TableRepository
+    TableRepository --> TableRepoController : tables
+    deactivate TableRepository
+    TableRepoController --> TableNameAccess : tables
+    deactivate TableRepoController
+    TableNameAccess --> NameEditor : tables
+    deactivate TableNameAccess
+    NameEditor -> NameEditor : isValid()
+
+    alt invalid
+        note right of NameEditor : Editing continues
+    else valid
+                NameEditor -> TableNameAccess : setName(...)
+        activate TableNameAccess
+        TableNameAccess -> TableRepoController : rename(...)
+        activate TableRepoController
+        TableRepoController -> RenameTableCommand : new RenameTableCommand()
+        activate RenameTableCommand
+        return command
+        TableRepoController -> UndoManager : execute(command)
+        activate UndoManager
+        UndoManager -> RenameTableCommand : execute()
+        activate RenameTableCommand
+        RenameTableCommand -> TableRepository : updateTableName(...)
+        activate TableRepository
+        TableRepository -> Table : setName(...)
+        activate Table
+        return void
+        return void
+        return void
+        return void
+        return void
+        return void
+    end
+
+    NameEditor --> TableSubwindow : void
+    deactivate NameEditor
+    TableSubwindow --> SubwindowManager : void
+    deactivate TableSubwindow
+    SubwindowManager --> MainWindow : void
+    deactivate SubwindowManager
+end
+
+MainWindow --> User
+deactivate MainWindow
+
+NameEditor --> TableSubwindow : void
+deactivate NameEditor
+TableSubwindow -> NameEditor : stopEditingTable()
+activate NameEditor
+NameEditor --> TableSubwindow : void
+deactivate NameEditor
+TableSubwindow --> EditAnySubwindowStrategy : void
+deactivate TableSubwindow
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : void
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher --> SubwindowManager : void
+deactivate MouseInteractionDispatcher
+SubwindowManager --> MainWindow : void
+deactivate SubwindowManager
+MainWindow --> User
+deactivate MainWindow 
+
+@enduml

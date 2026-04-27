@@ -1,0 +1,161 @@
+@startuml useCase6c
+hide footbox
+
+title Use Case 6c: Edit Column Default Value
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableDesignSubwindow
+participant ColumnDefaultValueEditor
+participant ColumnDefaultValueAccess
+participant TableController
+participant UndoManager
+participant ColumnDefaultValueCommand
+participant ColumnRepository
+participant Column
+
+User -> MainWindow : click in default value area
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+return true
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableDesignSubwindow : handleMouseEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> TableDesignSubwindow : getColumnIndexFromY(...)
+TableDesignSubwindow -> TableDesignSubwindow : isInDefaultValueArea(...)
+
+alt Column type == BOOLEAN
+  alt blanks allowed
+    TableDesignSubwindow -> TableController : cycleDefaultValue(...) true -> false -> ""
+    activate TableController
+    TableController -> ColumnDefaultValueCommand : New ColumnDefaultValueCommand()
+    activate ColumnDefaultValueCommand
+    return command
+    TableController -> UndoManager : execute(command)
+    activate UndoManager
+    UndoManager -> ColumnDefaultValueCommand : execute()
+    activate ColumnDefaultValueCommand
+    ColumnDefaultValueCommand -> ColumnRepository : setDefaultValue(...)
+    activate ColumnRepository
+    ColumnRepository -> Column : setDefaultValue(value)
+    activate Column
+    return void
+    return void
+    return void
+    return void
+    return void
+  else blanks not allowed
+    TableDesignSubwindow -> TableController : cycleDefaultValue(...) true <-> false
+    activate TableController
+    TableController -> ColumnDefaultValueCommand : New ColumnDefaultValueCommand()
+    activate ColumnDefaultValueCommand
+    return command
+    TableController -> UndoManager : execute(command)
+    activate UndoManager
+    UndoManager -> ColumnDefaultValueCommand : execute()
+    activate ColumnDefaultValueCommand
+    ColumnDefaultValueCommand -> ColumnRepository : setDefaultValue(...)
+    activate ColumnRepository
+    ColumnRepository -> Column : setDefaultValue(...)
+    activate Column
+    return void
+    return void
+    return void
+    return void
+    return void
+  end
+else Column type != BOOLEAN
+  TableDesignSubwindow -> ColumnDefaultValueEditor : startEditing(...)
+  activate ColumnDefaultValueEditor
+  return void
+end
+return void
+return void
+return void
+return void
+return 
+
+== User Types ==
+User -> MainWindow : press key (e.g. A, Backspace)
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableDesignSubwindow : handleKeyEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> ColumnDefaultValueEditor : handleKeyEvent(...)
+activate ColumnDefaultValueEditor
+return void
+return void
+return void
+return
+
+== Press Enter or Click Outside ==
+alt User presses Enter
+    User -> MainWindow : press Enter
+    activate MainWindow
+    MainWindow -> SubwindowManager : handleKeyEvent(...)
+    activate SubwindowManager
+    SubwindowManager -> TableDesignSubwindow : handleKeyEvent(...)
+    activate TableDesignSubwindow
+    TableDesignSubwindow -> ColumnDefaultValueEditor : handleKeyEvent(...)
+    activate ColumnDefaultValueEditor
+    ColumnDefaultValueEditor -> ColumnDefaultValueEditor : isValid()
+    alt invalid
+        note right of ColumnDefaultValueEditor : Editing continues
+    else valid
+        ColumnDefaultValueEditor -> ColumnDefaultValueAccess : setValue(...)
+        activate ColumnDefaultValueAccess
+        ColumnDefaultValueAccess -> TableController : setDefaultValue(...)
+        activate TableController
+        TableController -> ColumnDefaultValueCommand : New ColumnDefaultValueCommand()
+    activate ColumnDefaultValueCommand
+    return command
+    TableController -> UndoManager : execute(command)
+    activate UndoManager
+    UndoManager -> ColumnDefaultValueCommand : execute()
+    activate ColumnDefaultValueCommand
+    ColumnDefaultValueCommand -> ColumnRepository : setDefaultValue(...)
+    activate ColumnRepository
+    ColumnRepository -> Column : setDefaultValue(...)
+    activate Column
+    return void
+    return void
+    return void
+    return void
+    return void
+    return void
+
+    end
+    return void
+    return void
+    return void
+    return
+else User clicks outside
+    User -> MainWindow : click outside
+    activate MainWindow
+    MainWindow -> SubwindowManager : handleMouseEvent(...)
+    activate SubwindowManager
+    SubwindowManager -> TableDesignSubwindow : handleMouseEvent(...)
+    activate TableDesignSubwindow
+    TableDesignSubwindow -> ColumnDefaultValueEditor : commitEdit()
+    activate ColumnDefaultValueEditor
+    ... (same validation + setValue flow as above) ...
+end
+return void
+return void
+return void
+return
+
+@enduml

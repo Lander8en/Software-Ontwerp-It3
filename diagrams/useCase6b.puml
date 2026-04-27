@@ -1,0 +1,65 @@
+@startuml useCase6b
+title Use Case 6b: Change Column Type
+hide footbox
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableDesignSubwindow
+participant ColumnsController
+participant Table
+participant ColumnTypeValidator
+participant ColumnDefaultValueEditor
+
+User -> MainWindow : click in type area
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableDesignSubwindow : handleMouseEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> TableDesignSubwindow : isInTypeClickArea(...)
+TableDesignSubwindow -> TableDesignSubwindow : handleTypeClick(...)
+TableDesignSubwindow -> ColumnsController : setColumnType(...)
+note right of ColumnsController : Goes to the domain
+activate ColumnsController
+return void
+TableDesignSubwindow -> ColumnsController : getTableCopy()
+activate ColumnsController
+return copy of table
+TableDesignSubwindow -> ColumnTypeValidator : isColumnTypeValid(...)
+activate ColumnTypeValidator
+ColumnTypeValidator --> TableDesignSubwindow : true/false
+deactivate ColumnTypeValidator
+alt valid type
+    TableDesignSubwindow -> ColumnDefaultValueEditor : clearTypeBlock()
+    activate ColumnDefaultValueEditor
+    return void
+else invalid type
+    TableDesignSubwindow -> ColumnDefaultValueEditor : setTypeBlocked(...)
+    activate ColumnDefaultValueEditor
+    return void
+end
+return void
+deactivate TableDesignSubwindow
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : void
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher --> SubwindowManager : void
+deactivate MouseInteractionDispatcher
+SubwindowManager --> MainWindow : void
+deactivate SubwindowManager
+MainWindow --> User : void
+deactivate MainWindow
+@enduml

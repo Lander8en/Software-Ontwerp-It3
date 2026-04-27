@@ -1,0 +1,38 @@
+@startuml useCase12
+hide footbox
+title Use Case 12: Redo Modification
+
+actor User
+
+participant MainWindow
+participant SubwindowManager
+participant UndoManager
+participant redoStack
+participant undoStack
+participant Command
+
+User -> MainWindow : presses Ctrl+Shift+Z
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(..., Ctrl+Shift+Z)
+activate SubwindowManager
+SubwindowManager -> UndoManager : redo()
+activate UndoManager
+
+UndoManager -> redoStack : pop()
+activate redoStack
+redoStack --> UndoManager : Command
+deactivate redoStack
+
+UndoManager -> Command : execute()
+activate Command
+Command --> UndoManager : void
+deactivate Command
+
+UndoManager -> undoStack : push(Command)
+activate undoStack
+return void
+
+return void
+return void
+return
+@enduml

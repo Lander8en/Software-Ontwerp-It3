@@ -1,0 +1,77 @@
+@startuml useCase5
+title Use Case 5: Add Column
+hide footbox
+
+actor User
+
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindow
+participant TableDesignSubwindow
+participant TableController
+participant UndoManager
+participant AddColumnCommand
+participant Table
+participant ColumnRepository
+participant NameGenerator
+participant Column
+
+User -> MainWindow : double-click
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindow : wantsToHandle(...)
+activate EditAnySubwindow
+EditAnySubwindow --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindow
+MouseInteractionDispatcher -> EditAnySubwindow : handle(...)
+activate EditAnySubwindow
+EditAnySubwindow -> TableDesignSubwindow : handleMouseEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> TableDesignSubwindow : isInAddColumnArea(...)
+TableDesignSubwindow --> TableDesignSubwindow : true
+TableDesignSubwindow -> TableController : handleCreateNewColumnRequest()
+activate TableController
+TableController -> AddColumnCommand : New AddColumnCommand()
+activate AddColumnCommand
+AddColumnCommand -> Table : createNewColumn()
+activate Table
+Table -> ColumnRepository : createNewColumn()
+activate ColumnRepository
+ColumnRepository -> NameGenerator : generateUniqueName(...)
+activate NameGenerator
+NameGenerator --> ColumnRepository : name
+deactivate NameGenerator
+ColumnRepository -> Column : Column()
+activate Column
+return column
+return column
+Table -> Table : updateExistingRowsWithDefaultValues()
+return column
+return command
+TableController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> AddColumnCommand : execute()
+activate AddColumnCommand
+AddColumnCommand -> Table : addColumn(column)
+activate Table
+Table -> ColumnRepository : addColumn(column)
+activate ColumnRepository
+return void
+return void
+return void
+return void
+return void
+return void
+return void
+return void
+return void
+MainWindow --> User
+deactivate MainWindow
+@enduml

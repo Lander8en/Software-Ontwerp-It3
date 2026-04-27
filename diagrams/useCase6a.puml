@@ -1,0 +1,132 @@
+@startuml useCase6a
+hide footbox
+title Use Case 6a: Edit Column Name
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableDesignSubwindow
+participant NameEditor
+participant ColumnNameAccess
+participant TableController
+participant UndoManager
+participant RenameColumnCommand
+participant Table
+participant ColumnRepository
+participant Column
+
+User -> MainWindow : click on column name
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableDesignSubwindow : handleMouseEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> TableDesignSubwindow : getColumnIndexFromY(...)
+TableDesignSubwindow -> TableDesignSubwindow : isInNameClickArea(...)
+TableDesignSubwindow -> NameEditor : startEditing()
+activate NameEditor
+return void
+return void
+return void
+return void
+return void
+return
+
+== Typing ==
+User -> MainWindow : press key (e.g. A, Backspace)
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableDesignSubwindow : handleKeyEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> NameEditor : handleKeyEvent(...)
+activate NameEditor
+return void
+return void
+return void
+return
+
+== Press Enter or Click Outside ==
+alt User presses Enter
+    User -> MainWindow : press Enter
+    activate MainWindow
+    MainWindow -> SubwindowManager : handleKeyEvent(...)
+    activate SubwindowManager
+    SubwindowManager -> TableDesignSubwindow : handleKeyEvent(...)
+    activate TableDesignSubwindow
+    TableDesignSubwindow -> NameEditor : handleKeyEvent(...)
+    activate NameEditor
+    NameEditor -> ColumnNameAccess : getAll()
+    activate ColumnNameAccess
+    ColumnNameAccess -> TableController : columnsRequest()
+    activate TableController
+    TableController -> Table : getColumnRepository()
+    activate Table
+    Table -> ColumnRepository : getColumns()
+    activate ColumnRepository
+    return columns
+    return columns
+    return columns
+    return columns
+    NameEditor -> NameEditor : isValid()
+    alt invalid
+        note right of NameEditor : Editing continues
+    else valid
+        NameEditor -> ColumnNameAccess : setName(...)
+        activate ColumnNameAccess
+        ColumnNameAccess -> TableController : rename(...)
+        activate TableController
+        TableController -> RenameColumnCommand : New RenameColumnCommand()
+        activate RenameColumnCommand
+        return command
+        TableController -> UndoManager : execute(command)
+        activate UndoManager
+        UndoManager -> RenameColumnCommand : execute()
+        activate RenameColumnCommand
+        RenameColumnCommand -> Table : renameColumn()
+        activate Table
+        Table -> ColumnRepository : renameColumn()
+        activate ColumnRepository
+        ColumnRepository -> Column : setName()
+        activate Column
+        return void
+        return void
+        return void
+        return void
+        return void
+        return void
+        return void
+    end
+    return void
+    return void
+    return void
+    return
+else User clicks outside
+    User -> MainWindow : click outside
+    activate MainWindow
+    MainWindow -> SubwindowManager : handleMouseEvent(...)
+    activate SubwindowManager
+    SubwindowManager -> TableDesignSubwindow : handleMouseEvent(...)
+    activate TableDesignSubwindow
+    TableDesignSubwindow -> NameEditor : commitEdit()
+    activate NameEditor
+    ... (same validation + setName flow as above) ...
+end
+return void
+return void
+return void
+return
+@enduml

@@ -1,0 +1,81 @@
+@startuml useCase7
+title Use Case 7: Delete Column
+hide footbox
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindowStrategy
+participant TableDesignSubwindow
+participant TableController
+participant UndoManager
+participant DeleteColumnCommand
+participant Table
+participant ColumnRepository
+
+== Select Column ==
+User -> MainWindow : handleMouseEvent(MOUSE_CLICKED, x, y, 1)
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : wantsToHandle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher -> EditAnySubwindowStrategy : handle(...)
+activate EditAnySubwindowStrategy
+EditAnySubwindowStrategy -> TableDesignSubwindow : handleMouseEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> TableDesignSubwindow : getColumnIndexFromY(...)
+TableDesignSubwindow --> TableDesignSubwindow : index
+TableDesignSubwindow -> TableDesignSubwindow : isInSelectionMargin(...)
+TableDesignSubwindow --> TableDesignSubwindow : true
+note right of TableDesignSubwindow : selectedColumnIndex = index
+TableDesignSubwindow --> EditAnySubwindowStrategy : void
+deactivate TableDesignSubwindow
+EditAnySubwindowStrategy --> MouseInteractionDispatcher : void
+deactivate EditAnySubwindowStrategy
+MouseInteractionDispatcher --> SubwindowManager : void
+deactivate MouseInteractionDispatcher
+SubwindowManager --> MainWindow : void
+deactivate SubwindowManager
+MainWindow --> User
+deactivate MainWindow
+
+== Press Delete ==
+User -> MainWindow : handleKeyEvent(KEY_PRESSED, VK_DELETE, ...)
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> TableDesignSubwindow : handleKeyEvent(...)
+activate TableDesignSubwindow
+TableDesignSubwindow -> TableController : handleDeleteColumnRequest(index)
+activate TableController
+TableController -> DeleteColumnCommand : New DeleteColumnCommand()
+activate DeleteColumnCommand
+return command
+TableController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> DeleteColumnCommand : execute()
+activate DeleteColumnCommand
+DeleteColumnCommand -> Table : deleteColumn(index)
+activate Table
+Table -> ColumnRepository : remove(index)
+activate ColumnRepository
+ColumnRepository --> Table : void
+deactivate ColumnRepository
+Table -> Table : removeValueForColumnFromAllRows()
+return void
+return void
+return void
+return void
+return void
+return void
+return
+@enduml

@@ -1,0 +1,94 @@
+@startuml overviewDomain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+
+' === Domain model ===
+
+class Table {
+    - name : String
+    - columnRepository : ColumnRepository
+    - rows : List<Row>
+    + createNewRow()
+    + createNewColumn()
+    + renameColumn(Column, String)
+    + removeColumn(Column)
+    + deleteRow(Row)
+}
+
+class ColumnRepository {
+    - columns : List<Column>
+    - observers : List<ColumnRepositoryObserver>
+    + createNewColumn() : Column
+    + rename(Column, String)
+    + remove(Column)
+    + setType(Column, ColumnType)
+    + addObserver(observer)
+    + removeObserver(observer)
+    + notifyObservers(Column)
+}
+
+class Column {
+    - name : String
+    - type : ColumnType
+    - blanksAllowed : boolean
+    - defaultValue : String
+    + getName()
+    + setName(String)
+    + getType()
+    + setType(ColumnType)
+    + isBlanksAllowed()
+    + setBlanksAllowed(boolean)
+    + getDefaultValue()
+    + setDefaultValue(String)
+}
+
+enum ColumnType {
+    STRING
+    EMAIL
+    BOOLEAN
+    INTEGER
+    + next() : ColumnType
+    + getDefault() : ColumnType
+}
+
+class Row {
+    - values : List<String>
+    + getValue(index: int) : String
+    + setValue(index: int, String)
+    + addValue(String)
+}
+
+class TableRepository {
+    - tables : List<Table>
+    + createNewTable()
+    + updateTableName(Table, String)
+    + isTableNameValid(String, Table) : boolean
+    + remove(Table)
+}
+
+' === Undo Logic (abstract only) ===
+
+interface Command {
+    + execute()
+    + undo()
+}
+
+class UndoManager {
+    - undoStack : Deque<Command>
+    - redoStack : Deque<Command>
+    + execute(Command)
+    + undo()
+    + redo()
+}
+
+' === Relationships ===
+
+Table --> ColumnRepository
+Table --> "0..*" Row
+ColumnRepository --> "0..*" Column
+TableRepository --> "0..*" Table
+
+UndoManager --> "0..*" Command : uses
+
+@enduml

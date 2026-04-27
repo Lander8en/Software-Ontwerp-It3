@@ -1,0 +1,81 @@
+@startuml useCase4
+hide footbox
+title Use Case 4: Open Table
+
+Actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant OpenTableStrategy
+participant TablesSubwindow
+participant TableRepoController
+
+participant SubwindowFactory
+participant TableDesignSubwindow
+participant TableRowsSubwindow
+
+User -> MainWindow : double-click on table name
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(MOUSE_CLICKED, x, y, 2)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...) 
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> OpenTableStrategy : wantsToHandle(...)
+activate OpenTableStrategy
+return true
+MouseInteractionDispatcher -> OpenTableStrategy : handle(...)
+activate OpenTableStrategy
+OpenTableStrategy -> TablesSubwindow : getIndexFromY()
+activate TablesSubwindow
+return index
+OpenTableStrategy -> TablesSubwindow : getTableController(index)
+activate TablesSubwindow
+TablesSubwindow -> TableRepoController : getTableController(index)
+activate TableRepoController
+return controller
+return controller
+opt Table has no columns
+    OpenTableStrategy -> SubwindowManager : addNewTableDesignSubwindow(controller)
+    activate SubwindowManager
+    SubwindowManager -> SubwindowFactory : createNewTableDesignSubwindow(controller)
+    activate SubwindowFactory
+    SubwindowFactory -> TableDesignSubwindow : TableDesignWindow(...)
+    activate TableDesignSubwindow
+    return TableDesignSubwindow
+    return TableDesignSubwindow
+    return void
+else Table has columns
+    OpenTableStrategy -> SubwindowManager : addNewTableRowsSubwindow(controller)
+    activate SubwindowManager
+    SubwindowManager -> SubwindowFactory : createNewTableRowsSubwindow(controller)
+    activate SubwindowFactory
+    SubwindowFactory -> TableRowsSubwindow : TableRowsSubwindow(...)
+    activate TableRowsSubwindow
+    return TableRowsSubwindow
+    return TableRowsSubwindow
+    return void
+end
+return void
+return void
+return void
+return
+
+User -> MainWindow : press ctrl + F
+activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent()
+activate SubwindowManager
+SubwindowManager -> TablesSubwindow : getTableController()
+activate TablesSubwindow
+return controller
+SubwindowManager -> SubwindowFactory : createNewFormWindow(controller)
+activate SubwindowFactory
+SubwindowFactory -> TableFormSubwindow : TableFormSubwindow()
+activate TableFormSubwindow
+return TableFormSubwindow
+return TableFormSubwindow
+return void
+return
+@enduml

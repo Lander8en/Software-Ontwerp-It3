@@ -1,0 +1,88 @@
+@startuml useCase8
+title Use Case 8: Add Row
+hide footbox
+
+actor User
+participant MainWindow
+participant SubwindowManager
+participant MouseInteractionDispatcher
+participant EditAnySubwindow
+participant TableRowsSubwindow
+participant FormSubwindow
+participant TableController
+participant UndoManager
+participant AddRowCommand
+participant Table
+
+User -> MainWindow : double-click below row list
+activate MainWindow
+MainWindow -> SubwindowManager : handleMouseEvent(...)
+activate SubwindowManager
+SubwindowManager -> SubwindowManager : findSubwindowAt(...)
+SubwindowManager --> SubwindowManager : target
+SubwindowManager -> SubwindowManager : bringToFront(target)
+SubwindowManager -> MouseInteractionDispatcher : dispatchMouseEvent(...)
+activate MouseInteractionDispatcher
+MouseInteractionDispatcher -> EditAnySubwindow : wantsToHandle(...)
+activate EditAnySubwindow
+EditAnySubwindow --> MouseInteractionDispatcher : true
+deactivate EditAnySubwindow
+MouseInteractionDispatcher -> EditAnySubwindow : handle(...)
+activate EditAnySubwindow
+EditAnySubwindow -> TableRowsSubwindow : handleMouseEvent(...)
+activate TableRowsSubwindow
+TableRowsSubwindow -> TableRowsSubwindow : isInAddRowArea(...)
+TableRowsSubwindow --> TableRowsSubwindow : true
+TableRowsSubwindow -> TableController : handleCreateNewRowRequest()
+activate TableController
+TableController -> AddRowCommand : New AddRowCommand()
+activate AddRowCommand
+AddRowCommand -> Table : createNewRow()
+activate Table
+return row
+return command
+TableController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> AddRowCommand : execute()
+activate AddRowCommand
+AddRowCommand -> Table : AddRow(row)
+activate Table
+return void
+return void
+return void
+return void
+return void
+return void
+return void
+return void
+return
+
+User -> MainWindow : press ctrl + N in Form Window
+Activate MainWindow
+MainWindow -> SubwindowManager : handleKeyEvent(...)
+activate SubwindowManager
+SubwindowManager -> FormSubwindow : handleKeyEvent(...)
+activate FormSubwindow
+FormSubwindow -> TableController : handleCreateNewRowRequest()
+activate TableController
+TableController -> AddRowCommand : New AddRowCommand()
+activate AddRowCommand
+AddRowCommand -> Table : createNewRow()
+activate Table
+return row
+return command
+TableController -> UndoManager : execute(command)
+activate UndoManager
+UndoManager -> AddRowCommand : execute()
+activate AddRowCommand
+AddRowCommand -> Table : AddRow(row)
+activate Table
+return void
+return void
+return void
+return void
+return void
+return void
+return
+
+@enduml
